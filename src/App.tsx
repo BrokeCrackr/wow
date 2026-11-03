@@ -29,6 +29,7 @@ import {
   X,
 } from "lucide-react";
 import CharacterPortrait from "./components/CharacterPortrait";
+import CinematicPortrait from "./components/CinematicPortrait";
 import InstallApp from "./components/InstallApp";
 import {
   armorColors,
@@ -126,6 +127,9 @@ function App() {
   const [page, setPage] = useState<"studio" | "collection">("studio");
   const [rotation, setRotation] = useState(0);
   const [zoom, setZoom] = useState(1);
+  const [previewMode, setPreviewMode] = useState<"cinematic" | "live">(
+    "cinematic",
+  );
   const [saved, setSaved] = useState(false);
   const [saveDialog, setSaveDialog] = useState(false);
   const [guideDialog, setGuideDialog] = useState(false);
@@ -498,8 +502,12 @@ function App() {
                             aria-pressed={character.race === race.name}
                             onClick={() => update("race", race.name)}
                           >
-                            <span className={`race-symbol race-${race.id}`}>
+                            <span
+                              className={`race-symbol race-${race.id}`}
+                              aria-hidden="true"
+                            >
                               <RaceSymbol name={race.name} />
+                              <span className="race-thumbnail" />
                             </span>
                             <span>{race.name}</span>
                             {character.race === race.name && (
@@ -607,9 +615,25 @@ function App() {
                       </div>
                       <div className="info-note">
                         <Sparkles size={16} />
-                        <p>
-                          Every detail updates your character preview instantly.
-                        </p>
+                        {previewMode === "cinematic" ? (
+                          <div>
+                            <p>
+                              Switch to Live Customisation to preview colors,
+                              hair and gear.
+                            </p>
+                            <button
+                              className="preview-changes"
+                              onClick={() => setPreviewMode("live")}
+                            >
+                              Preview changes <ArrowRight size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <p>
+                            Every detail updates your character preview
+                            instantly.
+                          </p>
+                        )}
                       </div>
                     </>
                   )}
@@ -618,6 +642,14 @@ function App() {
                       <p className="equipment-intro">
                         Build your signature set. Select a piece to equip it;
                         select it again to remove it.
+                        {previewMode === "cinematic" && (
+                          <button
+                            className="preview-changes"
+                            onClick={() => setPreviewMode("live")}
+                          >
+                            Preview gear in live view <ArrowRight size={12} />
+                          </button>
+                        )}
                       </p>
                       {slots.map((slot) => (
                         <div className="gear-slot" key={slot}>
@@ -679,16 +711,37 @@ function App() {
               </section>
 
               <section
-                className="panel portrait-panel"
+                className={`panel portrait-panel ${previewMode === "cinematic" ? "is-cinematic" : "is-live"}`}
                 aria-label="Character preview"
               >
                 <div className="portrait-topline">
                   <span className="preview-label">
-                    <span /> LIVE PREVIEW
+                    <span />{" "}
+                    {previewMode === "cinematic"
+                      ? "CINEMATIC PORTRAIT"
+                      : "LIVE PREVIEW"}
                   </span>
                   <span className="level-badge">
                     LVL <strong>80</strong>
                   </span>
+                </div>
+                <div
+                  className="preview-mode-switch"
+                  role="group"
+                  aria-label="Character preview mode"
+                >
+                  <button
+                    aria-pressed={previewMode === "cinematic"}
+                    onClick={() => setPreviewMode("cinematic")}
+                  >
+                    HD Portrait
+                  </button>
+                  <button
+                    aria-pressed={previewMode === "live"}
+                    onClick={() => setPreviewMode("live")}
+                  >
+                    Live Customisation
+                  </button>
                 </div>
                 <div className="portrait-radial" />
                 <div className="portrait-grid" />
@@ -698,7 +751,14 @@ function App() {
                   className="portrait-art"
                   style={{ transform: `scale(${zoom})` }}
                 >
-                  <CharacterPortrait {...character} rotation={rotation} />
+                  {previewMode === "cinematic" ? (
+                    <CinematicPortrait
+                      race={character.race}
+                      onSwitchToLive={() => setPreviewMode("live")}
+                    />
+                  ) : (
+                    <CharacterPortrait {...character} rotation={rotation} />
+                  )}
                 </div>
                 <div className="portrait-vignette" />
                 <div className="character-caption">
@@ -713,17 +773,25 @@ function App() {
                   </p>
                 </div>
                 <div className="portrait-toolbar">
-                  <button
-                    className="icon-button"
-                    title="Turn left"
-                    aria-label="Turn character left"
-                    onClick={() => setRotation((v) => Math.max(-30, v - 10))}
-                    disabled={rotation <= -30}
-                  >
-                    <RotateCcw size={15} />
-                  </button>
-                  <span className="toolbar-divider" />
-                  <span className="view-label">CHARACTER VIEW</span>
+                  {previewMode === "live" && (
+                    <button
+                      className="icon-button"
+                      title="Turn left"
+                      aria-label="Turn character left"
+                      onClick={() => setRotation((v) => Math.max(-30, v - 10))}
+                      disabled={rotation <= -30}
+                    >
+                      <RotateCcw size={15} />
+                    </button>
+                  )}
+                  {previewMode === "live" && (
+                    <span className="toolbar-divider" />
+                  )}
+                  <span className="view-label">
+                    {previewMode === "cinematic"
+                      ? "PORTRAIT ZOOM"
+                      : "CHARACTER VIEW"}
+                  </span>
                   <span className="toolbar-divider" />
                   <button
                     className="icon-button"
@@ -747,18 +815,29 @@ function App() {
                   >
                     <Plus size={16} />
                   </button>
-                  <button
-                    className="icon-button"
-                    title="Turn right"
-                    aria-label="Turn character right"
-                    onClick={() => setRotation((v) => Math.min(30, v + 10))}
-                    disabled={rotation >= 30}
-                  >
-                    <RotateCcw size={15} className="flip" />
-                  </button>
+                  {previewMode === "live" && (
+                    <button
+                      className="icon-button"
+                      title="Turn right"
+                      aria-label="Turn character right"
+                      onClick={() => setRotation((v) => Math.min(30, v + 10))}
+                      disabled={rotation >= 30}
+                    >
+                      <RotateCcw size={15} className="flip" />
+                    </button>
+                  )}
                 </div>
                 <p className="preview-disclaimer">
-                  STYLISED PREVIEW · NOT IN-GAME RENDERING
+                  {previewMode === "cinematic" ? (
+                    <>
+                      CINEMATIC RACE ARTWORK
+                      <span className="preview-note-detail">
+                        Use Live Customisation for gear &amp; appearance
+                      </span>
+                    </>
+                  ) : (
+                    "STYLISED PREVIEW · NOT IN-GAME RENDERING"
+                  )}
                 </p>
               </section>
 

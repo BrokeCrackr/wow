@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 import { defaultCharacter, gearItems, starterPresets } from "./data";
@@ -19,9 +19,121 @@ beforeAll(() => {
 beforeEach(() => localStorage.clear());
 
 describe("character studio", () => {
+  it("opens with an HD portrait and changes its artwork when the race changes", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const portrait = screen.getByRole("img", {
+      name: "Night Elf cinematic HD character portrait",
+    });
+    const initialSource = portrait.getAttribute("src");
+    expect(screen.getByRole("button", { name: "HD Portrait" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(
+      screen.getByRole("button", { name: "Live Customisation" }),
+    ).toHaveAttribute("aria-pressed", "false");
+    expect(
+      screen.queryByRole("button", { name: "Turn character left" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Turn character right" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Orc" }));
+    expect(
+      screen.getByRole("img", { name: "Orc cinematic HD character portrait" }),
+    ).not.toHaveAttribute("src", initialSource);
+    expect(
+      screen.queryByRole("img", { name: /Night Elf cinematic/ }),
+    ).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem(CHARACTER_KEY)!).race).toBe("Orc");
+  });
+
+  it("switches between cinematic artwork and the customizable live preview with rotation controls", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(
+      screen.getByRole("button", { name: "Live Customisation" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Live Customisation" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("img", {
+        name: "Night Elf Hunter with customised equipment",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: /cinematic HD character portrait/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Turn character left" }),
+    ).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Turn character right" }),
+    ).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "HD Portrait" }));
+    expect(
+      screen.getByRole("img", {
+        name: "Night Elf cinematic HD character portrait",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Turn character left" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Turn character right" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("zooms the cinematic portrait without changing character data", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const portraitContainer = screen
+      .getByRole("img", { name: "Night Elf cinematic HD character portrait" })
+      .closest(".portrait-art");
+    expect(portraitContainer).toHaveStyle({ transform: "scale(1)" });
+    await user.click(screen.getByRole("button", { name: "Zoom in" }));
+    expect(portraitContainer).toHaveStyle({ transform: "scale(1.1)" });
+    await user.click(screen.getByRole("button", { name: "Zoom out" }));
+    expect(portraitContainer).toHaveStyle({ transform: "scale(1)" });
+    expect(JSON.parse(localStorage.getItem(CHARACTER_KEY)!)).toEqual(
+      defaultCharacter,
+    );
+  });
+
+  it("offers a working live preview when an HD portrait cannot load", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    fireEvent.error(
+      screen.getByRole("img", {
+        name: "Night Elf cinematic HD character portrait",
+      }),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "HD portrait unavailable",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Use live customisation" }),
+    );
+    expect(
+      screen.getByRole("img", {
+        name: "Night Elf Hunter with customised equipment",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Live Customisation" }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("updates identity, portrait, faction, and base stats when choosing a race and class", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await user.click(
+      screen.getByRole("button", { name: "Live Customisation" }),
+    );
 
     expect(
       screen.getByRole("img", {
@@ -59,6 +171,9 @@ describe("character studio", () => {
   it("applies appearance colors, hair style, and magical glow to the saved character", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await user.click(
+      screen.getByRole("button", { name: "Live Customisation" }),
+    );
     await user.click(screen.getByRole("tab", { name: "Appearance" }));
     await user.click(
       screen.getByRole("button", { name: "Armor palette: Crimson" }),
@@ -151,6 +266,9 @@ describe("character studio", () => {
   it("removes unequipped armor from the illustration and displays the chosen weapon independently of class", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await user.click(
+      screen.getByRole("button", { name: "Live Customisation" }),
+    );
     const portrait = screen.getByRole("img", { name: /Night Elf Hunter/ });
     expect(
       portrait.querySelector('[data-equipment-slot="head"]'),
@@ -232,6 +350,9 @@ describe("character studio", () => {
       screen.getByRole("heading", { name: "Moonfire" }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Load character" }));
+    await user.click(
+      screen.getByRole("button", { name: "Live Customisation" }),
+    );
     expect(screen.getByLabelText(/CHARACTER NAME/)).toHaveValue("Mira");
     expect(
       screen.getByRole("img", {
@@ -249,6 +370,9 @@ describe("character studio", () => {
   it("loads an inspiration preset with its identity, palette, and gear", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await user.click(
+      screen.getByRole("button", { name: "Live Customisation" }),
+    );
     await user.click(screen.getByRole("button", { name: /Dawnbringer/ }));
     expect(screen.getByLabelText(/CHARACTER NAME/)).toHaveValue("Thalion");
     expect(
@@ -283,6 +407,9 @@ describe("character studio", () => {
     );
     render(<App />);
     expect(screen.getByLabelText(/CHARACTER NAME/)).toHaveValue("Rill");
+    await user.click(
+      screen.getByRole("button", { name: "Live Customisation" }),
+    );
     expect(
       screen.getByRole("img", {
         name: "Dwarf Warrior with customised equipment",
@@ -306,10 +433,14 @@ describe("character studio", () => {
     ],
   ])(
     "recovers from %s in browser storage without breaking the studio",
-    (_description, stored) => {
+    async (_description, stored) => {
+      const user = userEvent.setup();
       localStorage.setItem(CHARACTER_KEY, stored);
       localStorage.setItem(PRESETS_KEY, "{bad presets");
       render(<App />);
+      await user.click(
+        screen.getByRole("button", { name: "Live Customisation" }),
+      );
       expect(screen.getByLabelText(/CHARACTER NAME/)).toHaveValue("Aeloria");
       expect(
         screen.getByRole("img", {

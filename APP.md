@@ -28,7 +28,7 @@ npm run preview -- --port 4173 --strictPort
 On the machine running the preview, open the address Vite prints. Localhost is a browser-supported secure context for development; installing from a different phone or computer requires a hosted HTTPS address. The Codex onboarding chat does not expose an interactive browser preview to users.
 
 1. Open the production app online. Wait for the **Armory is available offline** notice. Browser developer tools should show an active service worker and precached app files.
-2. Choose a name, race, class, appearance, and equipment. Save a named preset.
+2. Choose a name and race. Confirm the HD portrait changes. Switch to Live Customisation to preview exact class, appearance, and equipment choices, then save a named preset.
 3. Turn the browser's network offline and reload. The app should open with the current character restored; the saved preset should remain in My collection.
 4. Continue editing and saving while offline. Restore the connection when finished.
 5. Open **Get app** to view platform instructions, or **Install app** if your browser offers the native prompt. The browser decides when to make installation available. Automated tests verify the prompt behavior; an OS-level installation is a manual check on the target device.
@@ -37,7 +37,7 @@ The service worker is intentionally disabled under `npm run dev` so cached relea
 
 ## App updates and saved characters
 
-The service worker precaches the app shell, code, fonts, icons, and artwork. Character data stays in localStorage. When a new version is detected, Armory offers **Update app**; it does not interrupt an active session with an automatic reload. Your current character is saved as you edit.
+The service worker precaches the app shell, code, fonts, icons, and artwork, including all six HD portraits. The first online visit downloads approximately 15 MB so every race remains available offline. Character data stays in localStorage. When a new version is detected, Armory offers **Update app**; it does not interrupt an active session with an automatic reload. Your current character is saved as you edit.
 
 Presets belong to their browser and origin. Installing on a different device, using a different browser, moving to another domain, or clearing site storage can change which saved data is available. Export characters before moving or clearing data. Export produces JSON; importing it is not implemented.
 

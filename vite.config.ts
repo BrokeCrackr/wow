@@ -45,6 +45,8 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: "index.html",
+        // Keep the full-resolution cinematic artwork available offline.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         globPatterns: ["**/*.{js,css,html,svg,png,woff,woff2}"],
         cleanupOutdatedCaches: true,
       },

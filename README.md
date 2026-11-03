@@ -1,6 +1,8 @@
 # Armory — Character Atelier
 
-An installable, responsive World of Warcraft inspired character customization app built with React, TypeScript, and Vite. Original SVG artwork and bundled fonts keep the application independent of external APIs and image services. Install it on a phone or desktop, then reopen it offline after an initial online visit.
+An installable, responsive World of Warcraft inspired character customization app built with React, TypeScript, and Vite. Six original HD cinematic race portraits, an interactive SVG customizer, and bundled fonts keep the application independent of external APIs and image services. Install it on a phone or desktop, then reopen it offline after an initial online visit.
+
+![Armory HD character dashboard](docs/preview.png)
 
 ## Download and try it
 
@@ -46,7 +48,8 @@ The build includes TypeScript checking and produces `dist/`, a web manifest, and
 - **Identity:** name your character; choose from six races and six classes.
 - **Appearance:** change armor, hair, skin, hairstyle, and magical glow.
 - **Equipment:** equip or remove items in four slots; the artwork, item level, and illustrative stats update together.
-- **Live preview:** turn and zoom your original illustrated character.
+- **HD Portrait:** realistic 1024×1536 cinematic artwork changes with your chosen race. Zoom in to explore detailed armor, skin, hair, and lighting. This artwork depicts a curated race look; individual class, gear, colors, and hairstyles use the live view.
+- **Live Customisation:** switch to the reactive illustrated model to preview exact appearance and equipment changes, turn it, and zoom it. Saved collection cards retain this exact model.
 - **Presets:** save multiple builds, search your collection, load or delete them, and try three curated starter looks.
 - **Export:** download the current character as JSON. Export is a portable backup; a JSON import feature is not included.
 
@@ -59,6 +62,7 @@ This fan-made creative sandbox allows all race/class combinations. Artwork, cura
 - `src/App.tsx`: customization controls, collection, local persistence, and export.
 - `src/data.ts`: character types, races, classes, equipment, palettes, and starter presets.
 - `src/components/CharacterPortrait.tsx`: original parametric character artwork.
+- `src/components/CinematicPortrait.tsx` and `public/portraits/`: six generated HD race portraits, with an accessible fallback to live customisation.
 - `src/components/InstallApp.tsx`: native installation prompt and platform-specific instructions.
 - `src/components/AppStatus.tsx`: offline status, cache readiness, and user-controlled app updates.
 - `src/styles.css`: responsive interface and accessibility preferences.
